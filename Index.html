@@ -3,13 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Employee Directory</title>
+<title>Employee Management Portal</title>
 
 <style>
-body {
+
+* {
+    box-sizing: border-box;
     margin: 0;
+    padding: 0;
     font-family: Segoe UI, Arial, sans-serif;
-    background: #f5f7fa;
+}
+
+body {
+    background: #f4f6f8;
 }
 
 header {
@@ -20,49 +26,90 @@ header {
 }
 
 .container {
+    width: 90%;
     max-width: 1200px;
-    margin: auto;
+    margin: 20px auto;
+}
+
+.form-card {
+    background: white;
     padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    margin-bottom: 20px;
+}
+
+.form-card h2 {
+    margin-bottom: 15px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+    gap: 10px;
+}
+
+input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
 }
 
 .search-box {
     width: 100%;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
     margin-bottom: 20px;
-    font-size: 16px;
+}
+
+.button-group {
+    margin-top: 15px;
+}
+
+button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    color: white;
+    margin-right: 5px;
+}
+
+.save-btn {
+    background: #0078d4;
+}
+
+.clear-btn {
+    background: #6c757d;
+}
+
+.edit-btn {
+    background: #ff9800;
+}
+
+.delete-btn {
+    background: #dc3545;
 }
 
 .employee-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit,minmax(300px,1fr));
     gap: 20px;
 }
 
 .card {
     background: white;
-    border-radius: 12px;
+    border-radius: 10px;
     padding: 20px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    transition: 0.3s;
-}
-
-.card:hover {
-    transform: translateY(-5px);
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
 }
 
 .card h3 {
     color: #0078d4;
-    margin-top: 0;
+    margin-bottom: 10px;
 }
 
-.info {
-    margin: 8px 0;
-}
-
-.label {
-    font-weight: bold;
+.card p {
+    margin-bottom: 6px;
 }
 
 footer {
@@ -70,121 +117,249 @@ footer {
     padding: 20px;
     color: #666;
 }
-</style>
 
+</style>
 </head>
+
 <body>
 
 <header>
-    <h1>Employee Directory</h1>
+    <h1>Employee Management Portal</h1>
 </header>
 
 <div class="container">
+
+    <div class="form-card">
+
+        <h2>Add / Edit Employee</h2>
+
+        <input type="hidden" id="employeeIndex">
+
+        <div class="form-grid">
+
+            <input type="text" id="name" placeholder="Employee Name">
+
+            <input type="text" id="title" placeholder="Job Title">
+
+            <input type="text" id="location" placeholder="Location">
+
+            <input type="text" id="manager" placeholder="Manager">
+
+            <input type="text" id="department" placeholder="Department">
+
+            <input type="email" id="email" placeholder="Email">
+
+        </div>
+
+        <div class="button-group">
+
+            <button class="save-btn" onclick="saveEmployee()">
+                Save Employee
+            </button>
+
+            <button class="clear-btn" onclick="clearForm()">
+                Clear
+            </button>
+
+        </div>
+
+    </div>
 
     <input
         type="text"
         id="searchInput"
         class="search-box"
-        placeholder="Search by name, title, location..."
+        placeholder="Search Employee..."
         onkeyup="searchEmployees()">
 
-    <div id="employeeGrid" class="employee-grid">
-    </div>
+    <div id="employeeGrid" class="employee-grid"></div>
 
 </div>
 
 <footer>
-    Employee Directory Portal
+    Employee Management Portal © 2026
 </footer>
 
 <script>
 
-const employees = [
-    {
-        name: "Sateesh Kumar Reddy",
-        title: "Contractor",
-        location: "Bangalore",
-        manager: "Karthik Sundaram",
-        department: "Automation",
-        email: "sateesh@company.com"
-    },
-    {
-        name: "John Smith",
-        title: "Software Engineer",
-        location: "Hyderabad",
-        manager: "Jane Doe",
-        department: "IT",
-        email: "john@company.com"
-    },
-    {
-        name: "Priya Sharma",
-        title: "Business Analyst",
-        location: "Chennai",
-        manager: "Robert King",
-        department: "Operations",
-        email: "priya@company.com"
-    }
+let employees =
+JSON.parse(localStorage.getItem("employees")) || [
+
+{
+    name: "Sateesh Kumar Reddy",
+    title: "Contractor",
+    location: "Bangalore",
+    manager: "Karthik Sundaram",
+    department: "Automation",
+    email: "sateesh@example.com"
+}
+
 ];
 
-function loadEmployees(employeeList) {
+function saveData() {
 
-    const container =
+    localStorage.setItem(
+        "employees",
+        JSON.stringify(employees)
+    );
+}
+
+function renderEmployees(data = employees) {
+
+    const grid =
         document.getElementById("employeeGrid");
 
-    container.innerHTML = "";
+    grid.innerHTML = "";
 
-    employeeList.forEach(emp => {
+    if(data.length === 0) {
 
-        container.innerHTML += `
-            <div class="card">
-                <h3>${emp.name}</h3>
+        grid.innerHTML =
+            "<h3>No employees found.</h3>";
 
-                <div class="info">
-                    <span class="label">Job Title:</span>
-                    ${emp.title}
-                </div>
+        return;
+    }
 
-                <div class="info">
-                    <span class="label">Location:</span>
-                    ${emp.location}
-                </div>
+    data.forEach((emp,index) => {
 
-                <div class="info">
-                    <span class="label">Manager:</span>
-                    ${emp.manager}
-                </div>
+        grid.innerHTML += `
 
-                <div class="info">
-                    <span class="label">Department:</span>
-                    ${emp.department}
-                </div>
+        <div class="card">
 
-                <div class="info">
-                    <span class="label">Email:</span>
-                    ${emp.email}
-                </div>
-            </div>
+            <h3>${emp.name}</h3>
+
+            <p><b>Title:</b> ${emp.title}</p>
+            <p><b>Location:</b> ${emp.location}</p>
+            <p><b>Manager:</b> ${emp.manager}</p>
+            <p><b>Department:</b> ${emp.department}</p>
+            <p><b>Email:</b> ${emp.email}</p>
+
+            <br>
+
+            <button
+                class="edit-btn"
+                onclick="editEmployee(${index})">
+                Edit
+            </button>
+
+            <button
+                class="delete-btn"
+                onclick="deleteEmployee(${index})">
+                Delete
+            </button>
+
+        </div>
+
         `;
     });
 }
 
-function searchEmployees() {
+function saveEmployee() {
 
-    const searchText =
-        document.getElementById("searchInput")
-        .value.toLowerCase();
+    const employee = {
 
-    const filtered = employees.filter(emp =>
-        Object.values(emp)
-            .join(" ")
-            .toLowerCase()
-            .includes(searchText)
-    );
+        name:
+        document.getElementById("name").value,
 
-    loadEmployees(filtered);
+        title:
+        document.getElementById("title").value,
+
+        location:
+        document.getElementById("location").value,
+
+        manager:
+        document.getElementById("manager").value,
+
+        department:
+        document.getElementById("department").value,
+
+        email:
+        document.getElementById("email").value
+
+    };
+
+    if(employee.name.trim() === "") {
+
+        alert("Employee name is required");
+        return;
+    }
+
+    const index =
+        document.getElementById("employeeIndex").value;
+
+    if(index === "") {
+
+        employees.push(employee);
+
+    } else {
+
+        employees[index] = employee;
+    }
+
+    saveData();
+    renderEmployees();
+    clearForm();
 }
 
-loadEmployees(employees);
+function editEmployee(index) {
+
+    const emp = employees[index];
+
+    document.getElementById("employeeIndex").value = index;
+    document.getElementById("name").value = emp.name;
+    document.getElementById("title").value = emp.title;
+    document.getElementById("location").value = emp.location;
+    document.getElementById("manager").value = emp.manager;
+    document.getElementById("department").value = emp.department;
+    document.getElementById("email").value = emp.email;
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+}
+
+function deleteEmployee(index) {
+
+    if(confirm("Are you sure you want to delete this employee?")) {
+
+        employees.splice(index,1);
+
+        saveData();
+
+        renderEmployees();
+    }
+}
+
+function clearForm() {
+
+    document.getElementById("employeeIndex").value = "";
+    document.getElementById("name").value = "";
+    document.getElementById("title").value = "";
+    document.getElementById("location").value = "";
+    document.getElementById("manager").value = "";
+    document.getElementById("department").value = "";
+    document.getElementById("email").value = "";
+}
+
+function searchEmployees() {
+
+    const searchValue =
+        document.getElementById("searchInput")
+        .value
+        .toLowerCase();
+
+    const filtered =
+        employees.filter(emp =>
+            Object.values(emp)
+            .join(" ")
+            .toLowerCase()
+            .includes(searchValue)
+        );
+
+    renderEmployees(filtered);
+}
+
+renderEmployees();
 
 </script>
 
